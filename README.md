@@ -1,186 +1,214 @@
-# GitHub SSH Setup (Linux & Windows)
+# 🌿 Branch Setup & Main Branch Restore Guide
 
-A **fully automated, cross-platform GitHub SSH setup** using shell and PowerShell scripts. This repository helps you install Git, generate SSH keys, add them to GitHub, and verify secure SSH access — **without passwords**.
+This document covers:
 
----
+1. Creating a new branch named `branch-setup`
+2. Removing files from a branch
+3. Restoring the `main` branch after an accidental merge
 
-## 📦 Repository Contents
+Repository:
 
-| File        | Purpose                                          |
-| ----------- | ------------------------------------------------ |
-| `setup.sh`  | Automated setup for Linux (Ubuntu, Arch, Fedora) |
-| `setup.ps1` | Automated setup for Windows (PowerShell)         |
-| `README.md` | Complete usage and troubleshooting guide         |
-
----
-
-## 🧰 Prerequisites
-
-### Linux
-
-* A supported package manager:
-
-  * `apt` (Ubuntu / Debian)
-  * `pacman` (Arch)
-  * `dnf` (Fedora)
-* `sudo` access
-* Internet connection
-
-### Windows
-
-* Windows 10 / 11
-* PowerShell 5.1+ or PowerShell 7+
-* Git for Windows (downloaded if missing)
+```
+https://github.com/vish-official-2525/github-setup.git
+```
 
 ---
 
-## 🚀 Linux Setup (setup.sh)
+# 📁 Part 1 — Create New Branch (`branch-setup`)
 
-### 1️⃣ Make script executable
+## Step 1 — Go to Project Folder
 
 ```bash
-chmod +x setup.sh
+cd github-setup
 ```
 
-### 2️⃣ Run the script
+## Step 2 — Switch to Main Branch
 
 ```bash
-./setup.sh
+git checkout main
 ```
 
-### 3️⃣ What the script does
-
-* Detects Linux distribution
-* Installs Git (apt / pacman / dnf)
-* Configures Git username & email
-* Generates SSH key (`ed25519` or `rsa` fallback)
-* Starts `ssh-agent`
-* Adds SSH key automatically
-* Copies SSH public key to clipboard (if supported)
-* Tests GitHub SSH connection
-
----
-
-## 🪟 Windows Setup (setup.ps1)
-
-### 1️⃣ Allow script execution (one time)
-
-Run PowerShell **as Administrator**:
-
-```powershell
-Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
-```
-
-### 2️⃣ Run the script
-
-```powershell
-.\setup.ps1
-```
-
-### 3️⃣ What the script does
-
-* Checks if Git is installed
-* Configures Git username & email
-* Generates SSH key
-* Starts `ssh-agent`
-* Adds SSH key to agent
-* Displays public SSH key
-* Tests GitHub SSH connection
-
----
-
-## 🔑 Adding SSH Key to GitHub
-
-1. Copy the public key output shown by the script
-2. Go to: [https://github.com/settings/ssh/new](https://github.com/settings/ssh/new)
-3. Paste the key
-4. Set a title (e.g., `My Linux Laptop`)
-5. Click **Add SSH key**
-
----
-
-## ✅ Verify SSH Connection Manually
+## Step 3 — Pull Latest Code
 
 ```bash
-ssh -T git@github.com
+git pull origin main
 ```
 
-Expected output:
+## Step 4 — Create New Branch
 
+```bash
+git checkout -b branch-setup
 ```
-Hi <username>! You've successfully authenticated, but GitHub does not provide shell access.
+
+## Step 5 — Push Branch to GitHub
+
+```bash
+git push -u origin branch-setup
+```
+
+This will:
+
+* Create `branch-setup`
+* Switch to it
+* Upload it to GitHub
+
+## Verify Branch
+
+```bash
+git branch
+git branch -r
 ```
 
 ---
 
-## 🛠 Common Issues & Fixes
+# 🗑️ Part 2 — Remove a File from `branch-setup`
 
-### ❌ Permission denied (publickey)
+## Switch to Branch
 
 ```bash
-ssh-add ~/.ssh/id_ed25519
+git checkout branch-setup
 ```
 
-### ❌ ssh-agent not running
+## Remove File
 
 ```bash
-eval "$(ssh-agent -s)"
+git rm filename.ext
 ```
 
-### ❌ Wrong Git email
+## Commit Changes
 
 ```bash
-git config --global user.email "your@email.com"
+git commit -m "Removed file from branch-setup"
+```
+
+## Push Changes
+
+```bash
+git push origin branch-setup
+```
+
+### Keep File Locally but Remove from Git
+
+```bash
+git rm --cached filename.ext
+git commit -m "Removed from tracking"
+git push
 ```
 
 ---
 
-## 🔄 Switching HTTPS → SSH (Existing Repo)
+# 🔄 Part 3 — Restore Main Branch After Accidental Merge
+
+## Scenario
+
+You accidentally merged `branch-setup` into `main` and want to restore the previous state.
+
+---
+
+## Step 1 — Check Commit History
 
 ```bash
-git remote set-url origin git@github.com:USERNAME/REPO.git
+git checkout main
+git log --oneline
 ```
 
-Verify:
+Example:
+
+```
+a1b2c3d Merge branch 'branch-setup'
+9f8e7d6 Last stable commit
+```
+
+Copy the commit ID before the merge:
+
+```
+9f8e7d6
+```
+
+---
+
+## Method 1 — If Merge NOT Pushed
 
 ```bash
-git remote -v
+git reset --hard 9f8e7d6
 ```
 
 ---
 
-## 🧹 Uninstall / Cleanup
+## Method 2 — If Merge Already Pushed
 
 ```bash
-rm -rf ~/.ssh
+git reset --hard 9f8e7d6
+git push origin main --force
 ```
 
-⚠️ This removes **all SSH keys** — use carefully.
+This will:
+
+* Remove the merge commit
+* Restore `main` to the previous version
 
 ---
 
-## 📌 Best Practices
+## Method 3 — Safe Method (Team Environment)
 
-* Use **one SSH key per device**
-* Never share private keys
-* Use `ed25519` keys when possible
-* Protect keys with a passphrase
+Instead of rewriting history:
 
----
+```bash
+git revert -m 1 <merge_commit_id>
+git push origin main
+```
 
-## 📜 License
-
-MIT License
+This creates a new commit that undoes the merge.
 
 ---
 
-## ⭐ Notes
+# 🔍 Find Merge Commit
 
-This setup is ideal for:
+```bash
+git log --oneline --graph
+```
 
-* Embedded / Linux developers
-* CI/CD pipelines
-* Secure GitHub workflows
-* Passwordless Git operations
+Look for:
 
-Happy hacking 🚀
+```
+Merge branch 'branch-setup'
+```
+
+---
+
+# ⚠️ Important Notes
+
+* `reset --hard` deletes changes permanently
+* `--force` push rewrites GitHub history
+* Use force push only if you're sure
+
+---
+
+# ⚡ Quick Commands Summary
+
+## Create Branch
+
+```bash
+git checkout main
+git pull origin main
+git checkout -b branch-setup
+git push -u origin branch-setup
+```
+
+## Remove File
+
+```bash
+git checkout branch-setup
+git rm filename.ext
+git commit -m "Removed file"
+git push
+```
+
+## Restore Main
+
+```bash
+git checkout main
+git log --oneline
+git reset --hard <commit_before_merge>
+git push origin main --force
+```
